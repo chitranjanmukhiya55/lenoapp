@@ -228,3 +228,71 @@ function lenoapp_get_icon_class( $page_id ) {
 
     return isset( $icons[ $page_id ] ) ? $icons[ $page_id ] : 'fa-circle';
 }
+
+
+function set_minimum_quantity_for_variations($args, $product) {
+    if ($product->is_type('variable')) {
+        $minimum_quantity = 100; // Set your minimum quantity here
+        $args['input_value'] = $minimum_quantity; // Default quantity on page load
+        $args['min_value'] = $minimum_quantity;   // Minimum quantity for input
+        $args['step'] = 1; // Increment/decrement step
+    }
+    return $args;
+}
+add_filter('woocommerce_quantity_input_args', 'set_minimum_quantity_for_variations', 10, 2);
+
+
+add_filter('woocommerce_billing_fields', 'remove_billing_address_fields');
+function remove_billing_address_fields($fields) {
+    // Remove all billing fields except the email
+    unset($fields['billing_first_name']);
+    unset($fields['billing_last_name']);
+    unset($fields['billing_company']);
+    unset($fields['billing_country']);
+    unset($fields['billing_address_1']);
+    unset($fields['billing_address_2']);
+    unset($fields['billing_city']);
+    unset($fields['billing_state']);
+    unset($fields['billing_postcode']);
+    unset($fields['billing_phone']);
+    
+    return $fields;
+}
+
+add_filter('woocommerce_checkout_fields', 'customize_checkout_fields');
+function customize_checkout_fields($fields) {
+    // Remove phone field from checkout form
+    unset($fields['billing']['billing_phone']);
+    return $fields;
+}
+
+// Remove product image and gallery
+remove_action( 'woocommerce_before_single_product_summary', 'woocommerce_show_product_images', 20 );
+// Remove all product tabs
+add_filter( 'woocommerce_product_tabs', '__return_empty_array' );
+add_action( 'init', function() {
+    // Remove product image and gallery
+    remove_action( 'woocommerce_before_single_product_summary', 'woocommerce_show_product_images', 20 );
+
+    // Remove all product tabs (Description, Reviews, etc.)
+    add_filter( 'woocommerce_product_tabs', '__return_empty_array' );
+});
+
+
+add_action('woocommerce_add_order_item_meta', function ($item_id, $values, $cart_item_key) {
+    if (!empty($_POST['youtube_url'])) {
+        wc_add_order_item_meta($item_id, 'YouTube URL', sanitize_text_field($_POST['youtube_url']));
+    }
+}, 10, 3);
+
+
+// Add Wallet Balance to User Meta
+function get_user_wallet_balance($user_id) {
+    $balance = get_user_meta($user_id, 'wallet_balance', true);
+    return $balance ? floatval($balance) : 0.0;
+}
+
+function update_user_wallet_balance($user_id, $amount) {
+    $balance = get_user_wallet_balance($user_id);
+    update_user_meta($user_id, 'wallet_balance', $balance + floatval($amount));
+}
