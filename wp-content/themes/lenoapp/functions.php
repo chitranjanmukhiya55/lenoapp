@@ -201,19 +201,28 @@ function lenoapp_register_menus() {
 add_action( 'init', 'lenoapp_register_menus' );
 
 function lenoapp_add_onclick_to_menu_items( $items, $args ) {
-    if ( $args->theme_location === 'menu-1' ) {
+    if ( $args->theme_location === 'menu-1' ) { // Replace 'menu-1' with your actual theme location
         foreach ( $items as &$item ) {
             // Generate a page identifier based on the title
             $page_id = sanitize_title( $item->title ); // Example: "Dashboard" -> "dashboard"
-            $item->url = '#'; // Disable default link behavior
+
+            // Add custom HTML for the menu item, including an icon
             $item->title = '<i class="fas ' . lenoapp_get_icon_class( $page_id ) . '"></i> <span>' . $item->title . '</span>';
-            $item->attr_title = $page_id; // Add the identifier as a title attribute
-            $item->classes[] = 'menu-item-' . $page_id; // Add a custom class
+
+            // Add custom class and identifier
+            $item->attr_title = $page_id; // Identifier as a title attribute
+            $item->classes[] = 'menu-item-' . $page_id; // Custom class
+            $item->classes[] = 'menu-link'; // Additional class for JavaScript targeting
+
+            // Retain the original URL but add it as a data attribute for JavaScript handling
+            $item->url = esc_url($item->url); // Restore the original URL
+            $item->xfn = 'data-page-url="' . esc_url($item->url) . '"';
         }
     }
     return $items;
 }
 add_filter( 'wp_nav_menu_objects', 'lenoapp_add_onclick_to_menu_items', 10, 2 );
+
 
 // Helper function to assign icons dynamically
 function lenoapp_get_icon_class( $page_id ) {
